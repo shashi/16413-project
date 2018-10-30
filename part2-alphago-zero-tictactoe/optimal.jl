@@ -73,3 +73,47 @@ function minimize(state, player)
     score, x, optim_play = scores[idx]
     return score, nexplr, succ[idx][1]
 end
+
+
+######## The part below integrates the Optimal player with AlphaGo neural network player
+import AlphaGo: GameEnv, MCTSPlayer, initialize_game!, N, tree_search!, is_done
+adapt_state(x) = State(x.board)
+
+function play_optimal(env::AlphaGo.GameEnv, nn; tower_height = 6, num_readouts = 800, mode=0)
+  @assert 0 ≤ tower_height ≤ 19
+
+  az = MCTSPlayer(env, nn, num_readouts = num_readouts, two_player_mode = true)
+
+    states = []
+  initialize_game!(az)
+  num_moves = 0
+
+  while !is_done(az)
+        #println(az.root.position)
+        push!(states,  copy(az.root.position.board))
+    if num_moves % 2 == mode
+        if num_moves == 0
+            move = (rand(1:3), rand(1:3))
+        else
+            mv = maximize(adapt_state(az.root.position), 1)
+            move = mv[3]
+        end
+    else
+      current_readouts = N(az.root)
+      readouts = az.num_readouts
+
+      while N(az.root) < current_readouts + readouts
+        tree_search!(az)
+      end
+
+      move = pick_move(az)
+      #println(to_kgs(move, az.env))
+    end
+    if play_move!(az, move)
+      num_moves += 1
+    end
+  end
+
+  #println(az.root.position)
+    winner(adapt_state(az.root.position))
+end
