@@ -22,6 +22,7 @@ def value_iteration(mdp, epsilon=1e-3):
     V_iteration_new = dict([(s, 0) for s in mdp.S])
 
     iter = 0
+    expanded_states = []
 
     while True:
         # Initialize
@@ -31,6 +32,7 @@ def value_iteration(mdp, epsilon=1e-3):
 
         # Calculate Bellman's Equation
         for state in states:
+            expanded_states.append(state)
             V_iteration_temp = []
             for action in actions[state]:
                 V_iteration_temp_temp = 0
@@ -46,8 +48,9 @@ def value_iteration(mdp, epsilon=1e-3):
             delta = max(delta, abs(V_iteration[state] - V_iteration_new[state]))
 
         if delta < epsilon * (1 - gamma) / gamma:
-            print("The value iteration needed " + str(iter) + " iterations to converge")
-            return V_iteration
+            print("The value iteration needed " + str(iter) + " iterations to converge, " + 
+                  "and explored " + str(len(expanded_states)) + " states")
+            return V_iteration, expanded_states
 
 
 def extract_policy(mdp, V):
