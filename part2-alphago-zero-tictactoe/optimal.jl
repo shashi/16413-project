@@ -99,7 +99,7 @@ function update_stats!(stats, trace, score)
     end
 end
 
-function mctspriors(f, n)
+function random_stats(f, n)
     stats = Dict{State, Tuple{Int, Int}}()
     # we store sum and number of times chosen
     for i=1:n
@@ -109,29 +109,34 @@ function mctspriors(f, n)
     stats
 end
 
-function mcts_move(state, player, priors)
-    succ = next_states(state * player, player)
-    prior_vec = [get(priors, s[2], (0,1)) for s in succ]
-    # syntax note: /(x...) is the same as x[1] / x[2]
+# Upper Confidence Bound 1 applied to trees
+function uct(w, n, nₚ)
+    w/max(1, n) + (√2) * √(log(nₚ+1)/max(n, 1))
+end
 
-    weights = first.(prior_vec) ./ maximum(last.(prior_vec)) .+ 1
-    idx = sample(1:length(succ), Weights(weights), 1)[1] # sample a branch by weights
+function mcts_move(state, player, priors)
+    succ = next_states(state, player)
+    prior_vec = [get(priors, s[2], (0,1)) for s in succ]
+    _, nₚ = get(priors, state, (0,0)) # my count
+    ns = last.(prior_vec); ws = first.(prior_vec)
+    weights = uct.(ws, ns, nₚ)
+    idx = sample(1:length(succ), Weights(weights), 1)[1]
+    # sample a branch by weights
     succ[idx][1] # return the position
 end
 
-
 using StatsBase
-function play(fₓ, fₒ, state, player=X; update=false)
+function play(fₓ, fₒ, state, player=X; priors1=nothing, priors2=nothing, update=false)
     trace = State[]
 
     while true
         push!(trace, state)
         w = winner(state)
         if w == E && all(!iszero, state)
-            update && update_stats!(priors, trace, 0)
+            update && update_stats!(priors1, trace, 0)
             return 0 # draw
         elseif w != E
-            update && update_stats!(priors, trace, w == X ? 1 : -1)
+            update && update_stats!(priors2, trace, w == X ? 1 : -1)
             return (w == X ? 1 : -1)
         end
         if player === X
@@ -146,12 +151,15 @@ end
 
 function play_mcts_vs_optimal(state, priors, player=X; update=false)
     play((s, pl) -> mcts_move(s, pl, priors),
-         (s, pl) -> minimize(s, pl)[3], state, player, update=update)
+         (s, pl) -> minimize(s, pl)[3], state,
+         player, update=update, priors1=priors, priors2=priors)
 end
 
 function play_mcts_vs_mcts(state, priors1, priors2, player=X; update=false)
     play((s, pl) -> mcts_move(s, pl, priors1),
-         (s, pl) -> mcts_move(s, pl, priors2), state, player, update=update)
+         (s, pl) -> mcts_move(s, pl, priors2),
+         state, player, update=update,
+         priors1=priors1, priors2=priors2)
 end
  
 
