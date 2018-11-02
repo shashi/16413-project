@@ -35,7 +35,9 @@ function winner(s)
     return E
 end
 
-function maximize(state, player)
+using Memoize
+
+@memoize function maximize(state, player, f=minimize)
     
     if player != X
         error("Wrong player")
@@ -48,14 +50,14 @@ function maximize(state, player)
         return (w == X ? 1 : -1), 1, state
     end
     succ = next_states(state, X)
-    scores = [minimize(s[2], O) for s in succ]
+    scores = [f(s[2], O) for s in succ]
     nexplr = sum(s[2] for s in scores) + 1
     val, idx = findmax(first.(scores))
     score, x, optim_play = scores[idx]
     return score, nexplr, succ[idx][1]
 end
 
-function minimize(state, player)
+@memoize function minimize(state, player, f=maximize)
     if player != O
         error("Wrong player")
     end
@@ -67,15 +69,73 @@ function minimize(state, player)
         return (w == X ? 1 : -1), 1, state
     end
     succ = next_states(state, O)
-    scores = [maximize(s[2], X) for s in succ]
+    scores = [f(s[2], X) for s in succ]
     nexplr = sum(s[2] for s in scores) + 1
     val, idx = findmin(first.(scores))
     score, x, optim_play = scores[idx]
     return score, nexplr, succ[idx][1]
 end
 
+function randomplay(state, player)
+    w = winner(state)
+    if w == E && all(!iszero, state)
+        return 0, [state] # draw
+    elseif w != E
+        return (w == X ? 1 : -1), [state]
+    end
+    succ = next_states(state, player)
+    score, states = randomplay(rand(succ)[2], player == X ? O : X)
+    return score, vcat([state], states)
+end
+
+function mctspriors(f, n)
+    stats = Dict{State, Tuple{Int, Int}}() # we store sum and number of times chosen
+    for i=1:n
+        score, states = f(start_state, X) # run a random play -- gives score and a state
+        # for each state we keep a sum of scores and the
+        # number of times the state was taken
+        for s in states[2:end] # leave out start state
+            sum, count = haskey(stats, s) ? stats[s] : (0, 0)
+            sum += score
+            count += 1
+            stats[s] = (sum, count)
+        end
+    end
+    stats
+end
+
+function mcts_move(state, player, priors)
+    succ = next_states(state, player)
+    prior_vec = [/(get(priors, s[2], (0,1))...) for s in succ]
+    # syntax note: /(x...) is the same as x[1] / x[2]
+
+    weights = prior_vec .+ 1.01 # make weights positive
+    idx = sample(1:length(succ), Weights(weights), 1)[1] # sample a branch by weights
+    succ[idx][1] # return the position
+end
+
+
+using StatsBase
+function play_mcts_vs_optimal(priors, state, player=X)
+    while true
+        w = winner(state)
+        if w == E && all(!iszero, state)
+            return 0 # draw
+        elseif w != E
+            return (w == X ? 1 : -1)
+        end
+        if player === X
+            mv = mcts_move(state, X, priors)
+        else
+            a,b, mv = minimize(state, O)
+        end
+        state = move(state, mv..., player)
+        player = player === X ? O : X
+    end
+end
 
 ######## The part below integrates the Optimal player with AlphaGo neural network player
+using AlphaGo
 import AlphaGo: GameEnv, MCTSPlayer, initialize_game!, N, tree_search!, is_done
 adapt_state(x) = State(x.board)
 

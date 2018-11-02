@@ -1,0 +1,9 @@
+[deps]
+AlphaGo = "da2c498e-f8db-5b64-9cc4-315cb361752b"
+BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
+CSSUtil = "70588ee8-6100-5070-97c1-3cb50ed05fe8"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+InteractBase = "d3863d7c-f0c8-5437-a7b4-3ae773c01009"
+JSExpr = "97c1335a-c9c5-57fe-bc5d-ec35cebe8660"
+Observables = "510215fc-4207-5dde-b226-833fc4488ee2"
+WebIO = "0f1e0344-ec1d-5b48-a673-e5cf874b6c29"
