@@ -285,6 +285,12 @@ git-tree-sha1 = "9f390271c9a43dcbe908a10b5b9632cf58cbab5b"
 uuid = "e89f7d12-3494-54d1-8411-f7d8b9ae1f27"
 version = "0.4.1"
 
+[[Memoize]]
+deps = ["Test"]
+git-tree-sha1 = "d9683969337ad20dc957122038bd2c0ead4b5209"
+uuid = "c03570c3-d221-55d1-a50c-7939bbd78826"
+version = "0.3.0"
+
 [[Missings]]
 deps = ["Dates", "InteractiveUtils", "SparseArrays", "Test"]
 git-tree-sha1 = "adc26d2ee85a49c413464110d922cf21efc9d233"
@@ -460,9 +466,9 @@ version = "1.1.3"
 
 [[WebIO]]
 deps = ["AssetRegistry", "Base64", "Compat", "FunctionalCollections", "JSON", "Logging", "Observables", "Random", "Requires", "Sockets", "Test", "UUIDs", "Widgets"]
-git-tree-sha1 = "1f70c8c7c30fd6cf95fd5d517e59a5327505a043"
+git-tree-sha1 = "32696a34248889355397cc98a0df0513523ed814"
 uuid = "0f1e0344-ec1d-5b48-a673-e5cf874b6c29"
-version = "0.4.0"
+version = "0.4.1"
 
 [[Widgets]]
 deps = ["DataStructures", "Observables", "Test"]
