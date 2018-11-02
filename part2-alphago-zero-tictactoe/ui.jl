@@ -1,6 +1,6 @@
 using WebIO, InteractBase, JSExpr, CSSUtil, Observables
 
-const btn_style = Dict("width"=> 36px, "height"=>36px, "borderRadius" => 4px, "margin"=>2px)
+const btn_style = Dict("width"=> "36px", "height"=>"36px", "borderRadius" => "4px", "margin"=>"2px")
 
 function board()
     scope = Scope()
@@ -34,7 +34,7 @@ import AlphaGo: GameEnv, MCTSPlayer, initialize_game!, N, tree_search!, is_done
 # Play against a human player, nn is the neural network
 # human_moves: a Channel which gets populated by moves from the human
 # accepted moves: an observable where this function writes valid moves (so the UI can update)
-function play(env::AlphaGo.GameEnv, nn, human_moves, accepted_moves,
+function _play(env::AlphaGo.GameEnv, nn, human_moves, accepted_moves,
               notif; tower_height = 6, num_readouts = 800, mode = 0)
 
   @assert 0 ≤ tower_height ≤ 19
@@ -77,7 +77,7 @@ function play(env::AlphaGo.GameEnv, nn, human_moves, accepted_moves,
 end
 
 # Play with a specific neural network
-function play_with(gametype, nn::NeuralNet)
+function play_with(nn::NeuralNet)
     b = board()
 
     moves = Observable{Any}(nothing)
@@ -86,7 +86,8 @@ function play_with(gametype, nn::NeuralNet)
         b["cell-$i-$j"][] = string(mode)
     end
 
-    t= @async play(gametype, nn, makechan(b["clicks"]), moves, b["notif"])
+    game = AlphaGo.GomokuEnv(3,3)
+    t= @async _play(game, nn, makechan(b["clicks"]), moves, b["notif"])
 
     b,t
 end
