@@ -70,3 +70,14 @@ julia> notebook(dir=".")
 This will bring up the notebook server in this directory. Click on "AlphaGo Zero - Mastering the game of Go" notebook.
 
 Note that Julia is a just-in-time compiled language. This means the first time you run code, it needs to compile it (which may be slow). Expect to take about 10 minutes to execute the whole notebook the first time from beginning to end, however, you can go back up and run cells and have them be instantanious.
+
+## Troubleshooting
+
+- [Troubleshooting guide for IJulia](https://github.com/JuliaLang/IJulia.jl#troubleshooting)
+- If you have trouble installing stuff or anything breaks even after a smooth setup please send me an email about it or open an issue on this repository.
+
+## Fallback static version
+
+(this doesn't have the UI to play the game), but the content should be there.
+
+- [NBViewer link](https://nbviewer.jupyter.org/github/shashi/16413-project/blob/master/part2-alphago-zero-tictactoe/AlphaGo%20Zero%20--%20Mastering%20the%20game%20of%20Go.ipynb)
