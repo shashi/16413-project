@@ -111,15 +111,15 @@ end
 
 # Upper Confidence Bound 1 applied to trees
 function uct(w, n, nₚ)
-    w/max(1, n) + (√2) * √(log(nₚ+1)/max(n, 1))
+    w/n + (√2) * √(log(nₚ)/n)
 end
 
-function mcts_move(state, player, priors)
+function mcts_move(state, player, stats)
     succ = next_states(state, player)
-    prior_vec = [get(priors, s[2], (0,1)) for s in succ]
-    _, nₚ = get(priors, state, (0,0)) # my count
+    prior_vec = [get(stats, s[2], (0,1)) for s in succ]
+    _, nₚ = get(stats, state, (0,1)) # parent count
     ns = last.(prior_vec); ws = first.(prior_vec)
-    weights = uct.(ws, ns, nₚ)
+    weights = uct.(player * ws, ns, nₚ)
     idx = sample(1:length(succ), Weights(weights), 1)[1]
     # sample a branch by weights
     succ[idx][1] # return the position
@@ -149,17 +149,17 @@ function play_f(fₓ, fₒ, state, player=X; priors1=nothing, priors2=nothing, u
     end
 end
 
-function play_mcts_vs_optimal(state, priors, player=X; update=false)
-    play_f((s, pl) -> mcts_move(s, pl, priors),
-         (s, pl) -> minimize(s, pl)[3], state,
-         player, update=update, priors1=priors, priors2=priors)
-end
-
 function play_mcts_vs_mcts(state, priors1, priors2, player=X; update=false)
     play_f((s, pl) -> mcts_move(s, pl, priors1),
          (s, pl) -> mcts_move(s, pl, priors2),
          state, player, update=update,
          priors1=priors1, priors2=priors2)
+end
+
+function play_mcts_vs_optimal(state, priors, player=X; update=false)
+    play_f((s, pl) -> mcts_move(s, pl, priors),
+         (s, pl) -> minimize(s, pl)[3], state,
+         player, update=update, priors1=priors, priors2=priors)
 end
  
 
@@ -168,7 +168,8 @@ using AlphaGo
 import AlphaGo: GameEnv, MCTSPlayer, initialize_game!, N, tree_search!, is_done
 adapt_state(x) = State(x.board)
 
-function play_optimal(env::AlphaGo.GameEnv, nn; tower_height = 6, num_readouts = 800, mode=0)
+function play_nn_vs_optimal(nn; tower_height = 6, num_readouts = 800, mode=0)
+    env = AlphaGo.GomokuEnv(3,3)
   @assert 0 ≤ tower_height ≤ 19
 
   az = MCTSPlayer(env, nn, num_readouts = num_readouts, two_player_mode = true)
@@ -212,7 +213,8 @@ end
 using AlphaGo, Flux
 using BSON: @load
 
-function load_tictactoe_nn(str, n, env::AlphaGo.GameEnv)
+function load_tictactoe_nn(str, n)
+  env = AlphaGo.GomokuEnv(3,3)
   @load str*"/agz_base-$n.bson" bn
   @load str*"/agz_value-$n.bson" value
   @load str*"/agz_policy-$n.bson" policy
