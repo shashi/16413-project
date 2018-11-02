@@ -206,3 +206,24 @@ function play_optimal(env::AlphaGo.GameEnv, nn; tower_height = 6, num_readouts =
   #println(az.root.position)
     winner(adapt_state(az.root.position))
 end
+
+# A function to load saved models
+
+using AlphaGo, Flux
+using BSON: @load
+
+function load_tictactoe_nn(str, n, env::AlphaGo.GameEnv)
+  @load str*"/agz_base-$n.bson" bn
+  @load str*"/agz_value-$n.bson" value
+  @load str*"/agz_policy-$n.bson" policy
+
+  @load str*"/weights/agz_base-$n.bson" bn_weights
+  @load str*"/weights/agz_value-$n.bson" val_weights
+  @load str*"/weights/agz_policy-$n.bson" pol_weights
+
+  Flux.loadparams!(bn, bn_weights)
+  Flux.loadparams!(value, val_weights)
+  Flux.loadparams!(policy, pol_weights)
+
+  NeuralNet(env; base_net=bn, value=value, policy=policy)
+end
