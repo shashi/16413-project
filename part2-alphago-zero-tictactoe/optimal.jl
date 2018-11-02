@@ -88,51 +88,72 @@ function randomplay(state, player)
     return score, vcat([state], states)
 end
 
-function mctspriors(f, n)
-    stats = Dict{State, Tuple{Int, Int}}() # we store sum and number of times chosen
-    for i=1:n
-        score, states = f(start_state, X) # run a random play -- gives score and a state
+function update_stats!(stats, trace, score)
+    for s in trace[2:end] # leave out start state
         # for each state we keep a sum of scores and the
-        # number of times the state was taken
-        for s in states[2:end] # leave out start state
-            sum, count = haskey(stats, s) ? stats[s] : (0, 0)
-            sum += score
-            count += 1
-            stats[s] = (sum, count)
-        end
+        # number of times the state was reached
+        sum, count = haskey(stats, s) ? stats[s] : (0, 0)
+        sum += score
+        count += 1
+        stats[s] = (sum, count)
+    end
+end
+
+function mctspriors(f, n)
+    stats = Dict{State, Tuple{Int, Int}}()
+    # we store sum and number of times chosen
+    for i=1:n
+        score, trace = f(start_state, X) # run a random play -- gives score and a state
+        update_stats!(stats, trace, score)
     end
     stats
 end
 
 function mcts_move(state, player, priors)
-    succ = next_states(state, player)
-    prior_vec = [/(get(priors, s[2], (0,1))...) for s in succ]
+    succ = next_states(state * player, player)
+    prior_vec = [get(priors, s[2], (0,1)) for s in succ]
     # syntax note: /(x...) is the same as x[1] / x[2]
 
-    weights = prior_vec .+ 1.01 # make weights positive
+    weights = first.(prior_vec) ./ maximum(last.(prior_vec)) .+ 1
     idx = sample(1:length(succ), Weights(weights), 1)[1] # sample a branch by weights
     succ[idx][1] # return the position
 end
 
 
 using StatsBase
-function play_mcts_vs_optimal(priors, state, player=X)
+function play(fₓ, fₒ, state, player=X; update=false)
+    trace = State[]
+
     while true
+        push!(trace, state)
         w = winner(state)
         if w == E && all(!iszero, state)
+            update && update_stats!(priors, trace, 0)
             return 0 # draw
         elseif w != E
+            update && update_stats!(priors, trace, w == X ? 1 : -1)
             return (w == X ? 1 : -1)
         end
         if player === X
-            mv = mcts_move(state, X, priors)
+            mv = fₓ(state, X)
         else
-            a,b, mv = minimize(state, O)
+            mv = fₒ(state, O)
         end
         state = move(state, mv..., player)
         player = player === X ? O : X
     end
 end
+
+function play_mcts_vs_optimal(state, priors, player=X; update=false)
+    play((s, pl) -> mcts_move(s, pl, priors),
+         (s, pl) -> minimize(s, pl)[3], state, player, update=update)
+end
+
+function play_mcts_vs_mcts(state, priors1, priors2, player=X; update=false)
+    play((s, pl) -> mcts_move(s, pl, priors1),
+         (s, pl) -> mcts_move(s, pl, priors2), state, player, update=update)
+end
+ 
 
 ######## The part below integrates the Optimal player with AlphaGo neural network player
 using AlphaGo
