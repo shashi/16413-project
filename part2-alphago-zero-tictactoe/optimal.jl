@@ -126,7 +126,7 @@ function mcts_move(state, player, priors)
 end
 
 using StatsBase
-function play(fₓ, fₒ, state, player=X; priors1=nothing, priors2=nothing, update=false)
+function play_f(fₓ, fₒ, state, player=X; priors1=nothing, priors2=nothing, update=false)
     trace = State[]
 
     while true
@@ -150,13 +150,13 @@ function play(fₓ, fₒ, state, player=X; priors1=nothing, priors2=nothing, upd
 end
 
 function play_mcts_vs_optimal(state, priors, player=X; update=false)
-    play((s, pl) -> mcts_move(s, pl, priors),
+    play_f((s, pl) -> mcts_move(s, pl, priors),
          (s, pl) -> minimize(s, pl)[3], state,
          player, update=update, priors1=priors, priors2=priors)
 end
 
 function play_mcts_vs_mcts(state, priors1, priors2, player=X; update=false)
-    play((s, pl) -> mcts_move(s, pl, priors1),
+    play_f((s, pl) -> mcts_move(s, pl, priors1),
          (s, pl) -> mcts_move(s, pl, priors2),
          state, player, update=update,
          priors1=priors1, priors2=priors2)
