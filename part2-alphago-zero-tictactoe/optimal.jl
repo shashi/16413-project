@@ -88,6 +88,13 @@ function randomplay(state, player)
     return score, vcat([state], states)
 end
 
+## Input
+## - the stats dictionary
+## - the trace of a game (all states from begining to end)
+## - the final score
+## Result: updates the stats dictionary with newer stats
+##    for all states in trace
+
 function update_stats!(stats, trace, score)
     for s in trace[2:end] # leave out start state
         # for each state we keep a sum of scores and the

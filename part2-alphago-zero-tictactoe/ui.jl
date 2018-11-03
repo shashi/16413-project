@@ -52,6 +52,7 @@ function _play(env::AlphaGo.GameEnv, nn, human_moves, accepted_moves,
       move = Tuple(mv)
     else
       notif[] = "AlphaZero's turn"
+      yield
       current_readouts = N(az.root)
       readouts = az.num_readouts
 
@@ -70,10 +71,8 @@ function _play(env::AlphaGo.GameEnv, nn, human_moves, accepted_moves,
 
   #println(az.root.position)
 
-  winner = result(az.root.position)
-  set_result!(az, winner, false)
-  mode = mode == 0 ? -1 : 1
-  notif[] = string("Result ", az.result_string)
+  w = winner(State(az.position.board))
+  notif[] = w == X ? "X wins." : w == O ? "O wins." : "It's a draw"
 end
 
 # Play with a specific neural network
@@ -83,7 +82,7 @@ function play_with(nn::NeuralNet)
     moves = Observable{Any}(nothing)
     on(moves) do (mv, mode,)
         i, j = mv
-        b["cell-$i-$j"][] = string(mode)
+        b["cell-$i-$j"][] = mode==0 ? "X" : "O"
     end
 
     game = AlphaGo.GomokuEnv(3,3)
