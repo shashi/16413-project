@@ -4,7 +4,9 @@ This folder contains a Julia notebook and accompanying Julia code.
 
 Julia can be installed for your respective OS by downloading it from the [downloads page](https://julialang.org/downloads/) (version v1.0.1).
 
-Once install it, you can open the julia prompt by running the Julia executable.
+On linux, installation is just uncompressing the tarball you found on the downloads page. The Julia executable is present in usr/bin directory inside the uncompressed directory. Windows and Mac users can double click the file they downloaded to install it.
+
+Once you have installed it, you can open the julia prompt by running the Julia executable.
 
 Preferably, cd to this directory and then run Julia, if you can't do that, then start Julia and run
 

@@ -9,9 +9,34 @@ const X = Int8(1)
 const O = Int8(-1)
 const DRAW = Int8(3)
 
-const State = SArray{Tuple{3, 3}, Int8, 2, 9}
-const Edge = Tuple{State, State}
+struct State <: AbstractArray{Int8, 2}
+    st::SArray{Tuple{3, 3}, Int8, 2, 9}
+end
+Base.size(s::State) = size(s.st)
+Base.getindex(s::State, x...) = s.st[x...]
+StaticArrays.setindex(s::State, x...) = State(setindex(s.st, x...))
+Base.IndexStyle(s) = IndexStyle(s.st)
+
+const marks = Dict(E=>' ', X=>'×', O => 'o')
+function Base.show(io::IO, ::MIME"text/plain", s::State)
+    tpl = """1│2│3
+             ─┼─┼─
+             4│5│6
+             ─┼─┼─
+             7│8│9
+             """
+    for i=1:9
+        tpl = replace(tpl, string(i) => marks[s.st[i]])
+    end
+    print(io, tpl)
+end
 const start_state = State(zeros(Int8, 3,3))
+
+using WebIO
+
+function Base.show(io::IO, m::MIME"text/html", as::Array{Tuple{<:Any, State}})
+    show(io, m, node(:div, [hbox(a[1], a[2]) for a in as]...))
+end
 
 move(s, i,j, play) = (@assert s[i, j] == 0; setindex(s, play, i, j))
 next_states(s, player) = [((i,j), move(s, i,j, player))
